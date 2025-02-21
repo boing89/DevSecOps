@@ -1,0 +1,54 @@
+- name: Configure Ubuntu Client Container
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Get the IP address of the Docker container
+      community.docker.docker_container_info:
+        name: clab-try4-ubuntu-client
+      register: container_info
+
+    - name: Debug full container information
+      debug:
+        msg: "{{ container_info }}"
+
+    - name: Check if container information is valid
+      fail:
+        msg: "Container information could not be retrieved or is invalid."
+      when: >
+        container_info.container is not defined or
+        container_info.container.NetworkSettings is not defined or
+        container_info.container.NetworkSettings.Networks.clab is not defined or
+        container_info.container.NetworkSettings.Networks.clab.IPAddress == ""
+
+    - name: Debug container IP address
+      debug:
+        msg: "Container IP is {{ container_info.container.NetworkSettings.Networks.clab.IPAddress }}"
+
+    - name: Retrieve existing routes in Docker container
+      command: docker exec clab-try4-ubuntu-client ip route
+      register: route_output
+
+    - name: Display existing routes
+      debug:
+        msg: "Existing routes: {{ route_output.stdout }}"
+
+    - name: Add route in the Docker container if it does not already exist
+      shell: |
+        # Check if the route exists
+        if docker exec clab-try4-ubuntu-client sh -c "ip route show | grep -q '192.20.20.0/24'"; then
+          echo "Route already exists"
+        else
+          # Attempt to add the route and capture output
+          docker exec clab-try4-ubuntu-client sh -c "ip route add 192.20.20.0/24 via 182.20.20.1" || echo "Failed to add route"
+        fi
+      register: route_add_result
+      ignore_errors: yes
+
+    - name: Display result of route addition
+      debug:
+        msg: "Route addition stdout: {{ route_add_result.stdout }}"
+
+    - name: Display route addition errors
+      debug:
+        msg: "Route addition stderr: {{ route_add_result.stderr }}"
+     
