@@ -1,0 +1,30 @@
+---
+- name: Configure Apache server Container
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Ensure the Apache server Container is running
+      command: docker start clab-try4-apache-server
+
+    - name: Update package list in Apache Server container
+      command: docker exec clab-try4-apache-server apt-get update
+
+    - name: Install net-tools, iputils-ping and iproute2 in Apache Server container
+      command: docker exec clab-try4-apache-server apt-get install -y net-tools iputils-ping iproute2
+
+    - name: Add IP address to eth1 in Apache Server container
+      command: docker exec clab-try4-apache-server ip addr add 192.20.20.20.10/24 dev eth1
+
+    - name: Bring up eth1 interface in Apache Server container
+      command: docker exec clab-try4-apache-server ip link set eth1 up
+
+    - name: Verify IP address in Apache Server container
+      command: docker exec clab-try4-apache-server ip addr show dev eth1
+      register: ip_output
+
+    - name: Start SSH service in Apache Server container
+      command: docker exec clab-try4-apache-server service ssh start
+
+    - name: Debug IP address configuration
+      debug:
+        msg: "{{ ip_output.stdout }}"
