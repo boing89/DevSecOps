@@ -14,11 +14,10 @@
     - name: Check if container information is valid
       fail:
         msg: "Container information could not be retrieved or is invalid."
-      when: >
-        container_info.container is not defined or
-        container_info.container.NetworkSettings is not defined or
-        container_info.container.NetworkSettings.Networks.clab is not defined or
-        container_info.container.NetworkSettings.Networks.clab.IPAddress == ""
+      when: container_info.container is not defined or
+            container_info.container.NetworkSettings is not defined or
+            container_info.container.NetworkSettings.Networks.clab is not defined or
+            container_info.container.NetworkSettings.Networks.clab.IPAddress == ""
 
     - name: Debug container IP address
       debug:
