@@ -1,0 +1,55 @@
+---
+- name: Retrieve IP and Manage Docker Containers
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Get the IP address of the HTTPD container
+      community.docker.docker_container_info:
+        name: clab-try2-apache-server
+      register: httpd_container_info
+
+    - name: Debug HTTPD container IP address
+      debug:
+        msg: "HTTPD Container IP is {{ httpd_container_info.container.NetworkSettings.Networks.clab.IPAddress }}"
+
+    - name: Get the IP address of the Cisco router container
+      community.docker.docker_container_info:
+        name: clab-try2-csr
+      register: router_container_info
+
+    - name: Debug router container info
+      debug:
+        var: router_container_info
+
+    - name: Check if router container info is valid
+      fail:
+        msg: "Router container information could not be retrieved or is invalid."
+      when: router_container_info.container is not defined or
+            router_container_info.container.NetworkSettings is not defined or
+            router_container_info.container.NetworkSettings.IPAddress is not defined
+
+    - name: Debug router container IP address (for validation)
+      debug:
+        msg: "Router Container IP is {{ router_container_info.container.NetworkSettings.Networks.clab.IPAddress }}"
+
+    - name: Check if router container IP is set
+      fail:
+        msg: "Router container IP address is not available."
+      when: router_container_info.container.NetworkSettings.Networks.clab.IPAddress == ""
+
+    - name: Run the Telnet configuration script
+      command: >
+        python3 /root/mp/update_telnet_config.py
+        --host {{ router_container_info.container.NetworkSettings.Networks.clab.IPAddress }}
+        --port 5000
+      register: script_result
+      failed_when: script_result.rc != 0
+
+    - name: Display script output
+      debug:
+        msg: "{{ script_result.stdout }}"
+
+    - name: Display script error (if any)
+      debug:
+        msg: "{{ script_result.stderr }}"
+      when: script_result.stderr is defined and script_result.stderr != ''
