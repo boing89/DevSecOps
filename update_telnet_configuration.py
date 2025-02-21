@@ -25,12 +25,10 @@ commands = [
 try:
     tn = Telnet(host, port)
     time.sleep(2)  # Wait for the connection to establish
-    
     for command in commands:
         tn.write(command.encode('ascii') + b"\n")
         print(f"Sent: {command}")
         time.sleep(3)  # Wait for the command to execute
-    
     tn.write(b"exit\n")
     tn.close()
 except Exception as e:
