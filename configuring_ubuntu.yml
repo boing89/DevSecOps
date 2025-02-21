@@ -1,0 +1,23 @@
+---
+- name: Configure Ubuntu Client Container
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Ensure the Ubuntu client Container is running
+      command: docker start clab-try4-ubuntu-client
+
+    - name: Update package list in Ubuntu client container
+      command: docker exec clab-try4-ubuntu-client apt-get update
+
+    - name: Install net-tools, iputils-ping and iproute2 in Ubuntu Client container
+      command: docker exec clab-try4-ubuntu-client apt-get install -y net-tools iputils-ping iproute2
+
+    - name: Add IP address to eth1 in Ubuntu client container
+      command: docker exec clab-try4-ubuntu-client ip addr add 182.20.20.20.10/24 dev eth1
+
+    - name: Bring up eth1 interface in Ubuntu client container
+      command: docker exec clab-try4-ubuntu-client ip link set eth1 up
+
+    - name: Verify IP address in Ubuntu client container
+      command: docker exec clab-try4-ubuntu-client ip addr show dev eth1
+      register: ip_output
