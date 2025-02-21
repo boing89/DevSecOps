@@ -1,7 +1,7 @@
+from telnetlib import Telnet
 import argparse
 import time
 import sys
-from telnetlib import Telnet
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='Telnet configuration script.')
