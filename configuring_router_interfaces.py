@@ -49,3 +49,8 @@ try:
 
     #Ensure all commands are processed
     tn.read_until(b"#", timeout=10)
+    tn.write(b"exit\n")
+
+    tn.close()
+except Exception as e:
+    sys.exit(f"An error occured: {e}")
