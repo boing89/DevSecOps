@@ -1,0 +1,27 @@
+---
+- name: Deploy ContainerLab Topology
+  hosts: localhost
+  become: yes
+  vars:
+    topology_file: /root/mp/clab.yml
+  tasks:
+    - name: Install containerlab
+      shell: |
+        curl -sL https://containerlab.dev/setup | sudo bash -s "all"
+      args:
+        creates: /usr/local/bin/containerlab
+    - name: Check if topology file exists
+      stat:
+        path: "{{ topology_file }}"
+      register: topology_file_stat
+    - name: Fail if topology file does not exist
+      fail:
+        msg: "The specified topology file does not exist: {{ topology_file }}"
+      when: not topology_file_stat.stat.exists
+    - name: Deploy ContainerLab topology
+      command: containerlab deploy --topo {{ topology_file }}"
+      register: deploy_result
+      changed_when: deploy_result.stdout.find("successfully") != -1
+    - name: Show deployment result
+      debug:
+        msg: {{ deploy_result.stdout }}"
