@@ -1,0 +1,44 @@
+---
+- name: Retrieve IP and Manage Docker Containers
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Get the IP address of the HTTPD container
+      community.docker.docker_container_info:
+        name: clab-try4-apache-server 
+      register: httpd_container_info
+
+    - name: Debug HTTPD container info
+      debug:
+        var: httpd_container_info
+    - name: Debug HTTPD container IP address
+      debug:
+        msg: "HTTPD Container IP is {{ httpd_container_info.container.NetworkSettings.Networks.clab.IPAddress }}" 
+      when: 
+        httpd_container_info.container is defined and
+        httpd_container_info.container.NetworkSettings is defined and 
+        httpd_container_info.container.NetworkSettings.Networks is defined and
+        'clab' in httpd_container_info.container.NetworkSettings.Networks
+
+    - name: Get the IP address of the Cisco router container
+      community.docker.docker_container_info:
+        name: clab-try4-csr
+      register: router_container_info
+
+    - name: Debug router container info
+      debug:
+        var: router_container_info
+
+    - name: Check if router container info is valid
+      fail:
+        msg: "Router container information could not be retrieved or is invalid." 
+      when:
+        router_container_info.container is not defined or 
+        router_container_info.container.NetworkSettings is not defined or 
+        router_container_info.container.NetworkSettings.Networks is not defined or
+        'clab' not in router_container_info.container.NetworkSettings.Networks or 
+        router_container_info.container.NetworkSettings.Networks.clab.IPAddress is not defined
+
+    - name: Debug router container IP address (for validation)
+      debug:
+        msg: "Router Container IP is {{ router_container_info.container.NetworkSettings.Networks.clab.IPAddress }}
