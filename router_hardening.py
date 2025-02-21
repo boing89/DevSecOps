@@ -47,3 +47,5 @@ try:
         time.sleep(3) # Wait for the command to execute 
     tn.write(b"exit\n")
     tn.close()
+except Exception as e:
+    sys.exit(f"An error occured: {e}")
