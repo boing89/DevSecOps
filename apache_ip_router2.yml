@@ -1,7 +1,6 @@
 - name: Configure Apache Container
   hosts: localhost
   gather_facts: no
-
   tasks:
     - name: Get the IP address of the Docker container
       community.docker.docker_container_info:
