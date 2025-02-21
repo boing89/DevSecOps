@@ -14,11 +14,10 @@
     - name: Check if container information is valid
       fail:
         msg: "Container information could not be retrieved or is invalid."
-      when: >
-        container_info.container is not defined or
-        container_info.container.NetworkSettings is not defined or
-        container_info.container.NetworkSettings.Networks.clab is not defined or
-        container_info.container.NetworkSettings.Networks.clab.IPAddress is not defined
+      when: container_info.container is not defined or
+            container_info.container.NetworkSettings is not defined or
+            container_info.container.NetworkSettings.Networks.clab is not defined or
+            container_info.container.NetworkSettings.Networks.clab.IPAddress is not defined
 
     - name: Debug container IP address
       debug:
@@ -48,7 +47,9 @@
       debug:
         msg: "Route addition stdout: {{ route_add_result.stdout }}"
 
-    - name: Display route addition errors
+        - name: Display route addition errors
       debug:
         msg: "Route addition stderr: {{ route_add_result.stderr }}"
       when: route_add_result.stderr is defined and route_add_result.stderr | length > 0
+
+
