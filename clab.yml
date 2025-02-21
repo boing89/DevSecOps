@@ -1,0 +1,22 @@
+name: try
+
+topology:
+  nodes:
+    csr:
+      kind: vr-csr
+      image: vrnetlab/vr-csr:16.09.05
+
+    ubuntu-client:
+      kind: linux
+      image: scottyhardy/docker-remote-desktop:latest
+
+    apache-server:
+      kind: linux
+      image: beenjamming/apache-server:2
+
+      env:
+        BOOT_DELAY: 30
+
+links:
+  - endpoints: ["csr:eth1", "ubuntu-client:eth1"]
+  - endpoints: ["csr:eth2", "apache-server:eth1"]    
