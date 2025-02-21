@@ -1,0 +1,39 @@
+- name: Retrieve IP and SSH into Docker container
+  hosts: localhost
+  gather_facts: no
+
+  tasks:
+    - name: Get the IP address of the Docker container
+      community.docker.docker_container_info:
+        name: clab-try4-apache-server
+      register: container_info
+
+    - name: Debug full container information
+      debug:
+        msg: "{{ container_info }}"
+
+    - name: Check if container information is valid
+      fail:
+        msg: "Container information could not be retrieved or is invalid."
+      when: >
+        container_info.container is not defined or
+        container_info.container.NetworkSettings is not defined or
+        container_info.container.NetworkSettings.Networks.clab is not defined or
+        container_info.container.NetworkSettings.Networks.clab.IPAddress is not defined
+
+    - name: Debug container IP address
+      debug:
+        msg: "Container IP is {{ container_info.container.NetworkSettings.Networks.clab.IPAddress }}"
+
+    - name: Ensure sshpass is installed
+      ansible.builtin.package:
+        name: sshpass
+        state: present
+
+    - name: SSH into the Docker container and update index.html
+      ansible.builtin.command:
+        cmd: >
+          sshpass -p 'root' ssh -o StrictHostKeyChecking=no root@{{ container_info.container.NetworkSettings.Networks.clab.IPAddress }} \
+          "echo '<html><body><h1>It works for final MP presentation!</h1></body></html>' > /usr/local/apache2/htdocs/index.html"
+      delegate_to: localhost
+      run_once: yes
