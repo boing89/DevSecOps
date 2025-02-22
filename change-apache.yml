@@ -1,0 +1,24 @@
+- name: Edit Apache Server Webpage Content
+  hosts: worker1
+  become: yes
+  tasks:
+    - name: Get apache-server container ID
+      command: docker ps --filter "name=major-project_apache-server" --format "{{ '{{.Names}}' }}"
+      register: apache_container_id
+
+    - name: Verify apache-server container ID
+      debug:
+        msg: "Apache Container ID: {{ apache_container_id.stdout }}"
+
+    - name: Change content of index.html inside Apache server container
+      command: >
+        docker exec {{ apache_container_id.stdout }} /bin/bash -c 'echo "<html><body><h1>It really works!</h1></body></html>" > /var/www/html/index.html'
+      register: result
+
+    - name: Verify content change
+      command: docker exec {{ apache_container_id.stdout }} /bin/bash -c 'cat /var/www/html/index.html'
+      register: webpage_content
+
+    - name: Debug webpage content
+      debug:
+        msg: "Webpage Content: {{ webpage_content.stdout }}"
