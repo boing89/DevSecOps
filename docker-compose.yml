@@ -1,0 +1,16 @@
+version: '3.9'
+
+services:
+
+apache-server:
+    image: beenjamming/apache-server:fresh2
+    ports:
+        - "6969:80"
+    deploy:
+        placement:
+            constraints:
+                - node.hostname == worker1
+    networks:
+        alpha-overlay:
+    cap_add:
+        - NET_ADMIN
