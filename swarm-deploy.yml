@@ -1,0 +1,109 @@
+- name: Docker Swarm Setup
+  hosts: manager
+  become: yes
+  tasks:
+    - name: Initialize Docker Swarm
+      command: docker swarm init --advertise-addr {{ ansible_host }}
+      register: swarm_init_result
+      changed_when: "'This node is already part of a swarm' not in swarm_init_result.stdout"
+
+    - name: Get the join token for worker nodes
+      command: docker swarm join-token -q worker
+      register: work_join_token
+
+    - name: Create overlay network alpha-overlay
+      command: docker network create -d overlay --subnet=192.168.1.0/24 alpha-overlay
+      ignore_errors: yes
+
+    - name: Create overlay network bravo-overlay
+      command: docker network create -d overlay --subnet=192.168.2.0/24 bravo-overlay
+      ignore_errors: yes
+
+    - name: Deploy services from Docker Compose
+      command: docker stack deploy -c /root/major-project/swarm/docker-compose.yml major-project
+
+- name: Join worker nodes to the swarm
+  hosts: workers
+  become: yes
+  tasks:
+    - name: Join the Swarm
+      command: docker swarm join --token {{ hostvars['manager'].work_join_token.stdout }} {{ hostvars['manager'].ansible_host }}:2377
+
+- name: Verify worker nodes have joined the Swarm
+  hosts: manager
+  become: yes
+  tasks:
+    - name: List swarm nodes
+      command: docker node ls
+      register: node_list
+
+    - name: Debug Swarm node list
+      debug:
+        msg: "{{ node_list.stdout_lines }}"
+
+- name: Ensure the ubuntu-router service is running
+  hosts: manager
+  become: yes
+  tasks:
+    - name: Ensure the ubuntu-router service is running
+      command: docker service ls --filter "name=major-project_ubuntu-router"
+      register: service_check
+      failed_when: "'major-project_ubuntu-router' not in service_check.stdout or '1/1' not in service_check.stdout"
+
+- name: Retrieve IP addresses from ubuntu-router container
+  hosts: worker3
+  become: yes
+  tasks:
+    - name: Get ubuntu-router container ID
+      command: docker ps --filter "name=major-project_ubuntu-router" --format "{{ '{{.Names}}' }}"
+      register: container_id
+      failed_when: container_id.stdout_lines | length == 0
+
+    - name: Print container ID
+      debug:
+        msg: "Container ID: {{ container_id.stdout }}"
+
+    - name: Retrieve container details
+      community.docker.docker_container_info:
+        name: "{{ container_id.stdout }}"
+      register: ubuntu_router_info
+
+    - name: Debug IPv4 address of alpha-overlay
+      debug:
+        msg: "IPv4 Address of alpha-overlay is {{ ubuntu_router_info.container.NetworkSettings.Networks['alpha-overlay'].IPAddress }}"
+
+    - name: Debug IPv4 address of bravo-overlay
+      debug:
+        msg: "IPv4 Address of bravo-overlay is {{ ubuntu_router_info.container.NetworkSettings.Networks['bravo-overlay'].IPAddress }}"
+
+- name: Add routes to container for communication
+  hosts: workers
+  become: yes
+  tasks:
+    - name: Get apache-server container ID
+      command: docker ps --filter "name=major-project_apache-server" --format "{{ '{{.Names}}' }}"
+      register: apache_container_id
+      when: inventory_hostname == 'worker1'
+
+    - name: Get rdp-client container ID
+      command: docker ps --filter "name=major-project_rdp-client" --format "{{ '{{.Names}}' }}"
+      register: rdp_container_id
+      when: inventory_hostname == 'worker2'
+
+    - name: Add route to the Apache server container
+      command: >
+        docker exec {{ apache_container_id.stdout }} ip route add 192.168.2.0/24 via {{ hostvars['worker3'].ubuntu_router_info.container.NetworkSettings.Networks['alpha-overlay'].IPAddress }} dev eth0
+      when: inventory_hostname == 'worker1'
+
+    - name: Debug RDP container ID
+      debug:
+        var: rdp_container_id.stdout
+
+    - name: Debug IP Address on bravo-overlay
+      debug:
+        var: hostvars['worker3'].ubuntu_router_info.container.NetworkSettings.Networks['bravo-overlay'].IPAddress
+
+    - name: Add route to the client container
+      command: >
+        docker exec {{ rdp_container_id.stdout }} ip route add 192.168.1.0/24 via {{ hostvars['worker3'].ubuntu_router_info.container.NetworkSettings.Networks['bravo-overlay'].IPAddress }} dev eth0
+      when: inventory_hostname == 'worker2'
