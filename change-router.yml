@@ -1,0 +1,29 @@
+- name: Edit Apache Server Webpage Content
+  hosts: worker3
+  become: yes
+  tasks:
+    - name: Get ubuntu-router container ID
+      command: docker ps --filter "name=major-project_ubuntu-router" --format "{{ '{{.Names}}' }}"
+      register: container_id
+      failed_when: container_id.stdout_lines | length == 0
+
+    - name: Update package lists inside the ubuntu-router container
+      command: "docker exec {{ container_id.stdout }} apt-get update"
+
+    - name: Install UFW inside the ubuntu-router container
+      command: "docker exec {{ container_id.stdout }} apt-get install -y ufw"
+
+    - name: Allow traffic from alpha-overlay subnet (192.168.1.0/24)
+      command: "docker exec {{ container_id.stdout }} ufw allow from 192.168.1.0/24 to any"
+
+    - name: Allow traffic from bravo-overlay subnet (192.168.2.0/24)
+      command: "docker exec {{ container_id.stdout }} ufw allow from 192.168.2.0/24 to any"
+
+    - name: Set UFW default policy to allow routed traffic
+      command: "docker exec {{ container_id.stdout }} ufw default allow routed"
+
+    - name: Enable UFW
+      command: "docker exec {{ container_id.stdout }} ufw enable"
+
+    - name: Reload UFW
+      command: "docker exec {{ container_id.stdout }} ufw reload"
