@@ -39,3 +39,12 @@ services:
             bravo-overlay:
         cap_add:
             - NET_ADMIN
+            
+networks:
+    alpha-overlay:
+        driver: overlay
+        external: true
+
+    bravo-overlay:
+        driver: overlay
+        external: true
