@@ -2,15 +2,40 @@ version: '3.9'
 
 services:
 
-apache-server:
-    image: beenjamming/apache-server:fresh2
-    ports:
-        - "6969:80"
-    deploy:
-        placement:
-            constraints:
-                - node.hostname == worker1
+    apache-server:
+        image: beenjamming/apache-server:fresh2
+        ports:
+            - "6969:80"
+        deploy:
+            placement:
+                constraints:
+                    - node.hostname == worker1
     networks:
         alpha-overlay:
     cap_add:
         - NET_ADMIN
+
+    rdp-client:
+        image: beenjamming/rdp-client:latest
+        ports:
+            - "3389:3389/tcp"
+        deploy:
+            placement:
+                constraints:
+                    - node.hostname == worker2
+        networks:
+            bravo-overlay:
+        cap_add:
+            - NET_ADMIN
+
+    ubuntu-router:
+        image: beenjamming/ubuntu-router:latest
+        deploy:
+            placement:
+                constraints:
+                    - node.hostname == worker3
+        networks:
+            alpha-overlay:
+            bravo-overlay:
+        cap_add:
+            - NET_ADMIN
