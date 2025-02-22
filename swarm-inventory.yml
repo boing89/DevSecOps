@@ -1,0 +1,22 @@
+all: 
+  children:
+    managers:
+      hosts:
+        manager:
+          ansible_host: 192.168.1.10
+          ansible_user: root
+          ansible_ssh_pass: root
+      workers:
+        hosts:
+          worker1:
+            ansible_host: 192.168.1.20
+            ansible_user: root
+            ansible_ssh_pass: root
+          worker2:
+            ansible_host: 192.168.2.20
+            ansible_user: root
+            ansible_ssh_pass: root
+          worker3:
+            ansible_host: 192.168.1.30
+            ansible_user: root
+            ansible_ssh_pass: root
