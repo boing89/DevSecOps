@@ -1,4 +1,4 @@
-# DevSecOps
+# DevSecOps and IAC Process Automation
 
 ContainerLab/Docker -> only on a local computer
 
