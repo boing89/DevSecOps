@@ -1,0 +1,9 @@
+---
+- name: Leave Docker Swarm
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Make nodes leave the Docker Swarm
+      command: docker swarm leave --force
+      ignore_errors: yes  # To prevent errors if the node is not part of a swarm
