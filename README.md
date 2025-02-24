@@ -16,7 +16,7 @@ Simple network topology this stimulates: CSR 1000V Router, Apache Server, Ubuntu
 
 ContainerLab/Docker Files and its purpose:
 
-clab.yml -> ContainerLab topology file ( defines the network topology)
+clab.yml -> ContainerLab topology file (defines the network topology)
 plb.yml -> Ansible script for deploying topology file 
 configuring_apache.yml -> Ansible script for installation of ip route, ping, net tools and start the ssh service for Ansible to go into the server to make changes
 configuring_ubuntu.yml -> Ansible script for installation of ip route, ping and net tools
@@ -33,8 +33,8 @@ update_router.yml -> Ansible script to run the Python script to harden the route
 
 Docker Swaarm Files and its purpose:
 
-ansible.cfg
-docker-compose.yml
-swarm-deploy.yml
-swarm-inventory.yml
-swarm-leave.yml
+ansible.cfg -> Disables host key checking when Ansible connects to the remote hosts (temp solution)
+docker-compose.yml -> Contains configurations for deploying the docker containers and their networks
+swarm-deploy.yml -> Initialises the Docker Swarm, creates overlay networks, and deploys the docker containers
+swarm-inventory.yml -> Defines the hosts and groups for Ansible to manage the Docker Swarm setup
+swarm-leave.yml -> Makes all hosts leave the swarm
